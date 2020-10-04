@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Avig
@@ -40,6 +41,17 @@ namespace Avig
             Console.Write("Frequencies: ");
             for (var i = 0; i < alphabetLength; ++i)
                 Console.Write($"{characters[i]}:{frequencies[i]} ");
+
+            Console.WriteLine();
+            Console.WriteLine($"Index of Coincidence: {GetIC(frequencies, text.Length)}.");
+        }
+
+        private static double GetIC(IEnumerable<int> freq, int len)
+        {
+            double ic = 0;
+            foreach (int i in freq)
+                ic += i * (i - 1);
+            return ic / (len * (len - 1));
         }
     }
 }
