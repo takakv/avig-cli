@@ -1,0 +1,8 @@
+# JetBrains IDEs
+.idea/
+
+# C# solution user settings
+*.DotSettings.user
+
+bin/
+obj/
