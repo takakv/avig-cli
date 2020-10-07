@@ -67,7 +67,6 @@ namespace Avig
                 Console.WriteLine($"IC{i + 1}: {GetIC(partials[i])}");
             }
 
-            Console.WriteLine();
             var indices = new List<double[]>();
             for (var i = 0; i < keyLength; ++i)
                 for (int j = i + 1; j < keyLength; ++j)
@@ -76,8 +75,10 @@ namespace Avig
             Console.WriteLine();
             Console.WriteLine("The highest indexes of coincidence are:");
             double[] maximums = GetListOfMax(indices, out int[] indexes);
+            ApplyICThreshold(maximums, ref indexes);
             for (var i = 0; i < maximums.Length; ++i)
                 Console.Write($"{maximums[i]} (pos {indexes[i]}) ");
+            
         }
 
         private static double GetIC(IEnumerable<int> freq, int len)
@@ -215,6 +216,15 @@ namespace Avig
             for (var i = 0; i < list.Count; ++i)
                 maximums[i] = GetMaxFromList(list[i], out positions[i]);
             return maximums;
+        }
+
+        private static void ApplyICThreshold(IReadOnlyList<double> maximums, ref int[] indexes)
+        {
+            for (var i = 0; i < maximums.Count; ++i)
+            {
+                if (maximums[i] < 0.06)
+                    indexes[i] = -1;
+            }
         }
     }
 }
