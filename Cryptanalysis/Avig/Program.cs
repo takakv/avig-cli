@@ -75,10 +75,12 @@ namespace Avig
             Console.WriteLine();
             Console.WriteLine("The highest indexes of coincidence are:");
             double[] maximums = GetListOfMax(indices, out int[] indexes);
-            ApplyICThreshold(maximums, ref indexes);
+            ApplyICThreshold(maximums, ref indexes, out int validCount);
             for (var i = 0; i < maximums.Length; ++i)
                 Console.Write($"{maximums[i]} (pos {indexes[i]}) ");
-            
+
+            int[][] coefficients = GetLinearCoefficients(keyLength, validCount, indexes);
+            Console.WriteLine("Test");
         }
 
         private static double GetIC(IEnumerable<int> freq, int len)
@@ -218,13 +220,36 @@ namespace Avig
             return maximums;
         }
 
-        private static void ApplyICThreshold(IReadOnlyList<double> maximums, ref int[] indexes)
+        private static void
+            ApplyICThreshold(IReadOnlyList<double> maximums, ref int[] indexes, out int count)
         {
+            count = 0;
             for (var i = 0; i < maximums.Count; ++i)
             {
                 if (maximums[i] < 0.06)
                     indexes[i] = -1;
+                else
+                    ++count;
             }
+        }
+
+        private static int[][]
+            GetLinearCoefficients(int keyLength, int coefficientCount, int[] indexes)
+        {
+            var placeholders = new List<int[]>();
+
+            for (var i = 0; i < keyLength; ++i)
+                for (int j = i + 1; j < keyLength; ++j)
+                    placeholders.Add(new[] {i + 1, j + 1, 0});
+
+            var coefficients = new int[coefficientCount][];
+            var coefficientIndex = 0;
+            for (var i = 0; i < indexes.Length; ++i)
+                if (indexes[i] != -1)
+                    coefficients[coefficientIndex++] =
+                        new[] {placeholders[i][0], placeholders[i][1], indexes[i]};
+            
+            return coefficients;
         }
     }
 }
