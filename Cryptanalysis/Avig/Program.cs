@@ -56,16 +56,22 @@ namespace Avig
             Console.WriteLine("Which substring would you like to use for testing?");
             string subStr = Console.ReadLine()?.ToUpper();
             
-            int length = Kasiski(text, subStr);
-            Console.WriteLine($"The probable key-length is {length}.");
+            int keyLength = Kasiski(text, subStr);
+            Console.WriteLine($"The probable key-length is {keyLength}.");
             
             Console.WriteLine();
-            Console.WriteLine($"Examining substrings based on key-length of {length}:");
-            string[] partials = PartialText(text, length);
+            Console.WriteLine($"Examining substrings based on key-length of {keyLength}:");
+            string[] partials = PartialText(text, keyLength);
             for (var i = 0; i < partials.Length; ++i)
             {
                 Console.WriteLine($"IC{i + 1}: {GetIC(partials[i])}");
             }
+
+            Console.WriteLine();
+            var indices = new List<double[]>();
+            for (var i = 0; i < keyLength; ++i)
+                for (int j = i + 1; j < keyLength; ++j)
+                    indices.Add(GetMutualICList(partials[i], partials[j]));
         }
 
         private static double GetIC(IEnumerable<int> freq, int len)
@@ -88,6 +94,36 @@ namespace Avig
                 ++frequencies[Array.IndexOf(characters, c)];
 
             return GetIC(frequencies, text.Length);
+        }
+
+        private static double[] GetMutualICList(string text1, string text2)
+        {
+            const int alphabetLength = 26;
+            var characters = new char[alphabetLength];
+            for (var i = 0; i < alphabetLength; ++i)
+                characters[i] = (char) ('A' + i);
+
+            var frequencies1 = new int[alphabetLength];
+            var frequencies2 = new int[alphabetLength];
+
+            foreach (char c in text1)
+                ++frequencies1[Array.IndexOf(characters, c)];
+
+            foreach (char c in text2)
+                ++frequencies2[Array.IndexOf(characters, c)];
+
+            var icList = new double[alphabetLength];
+
+            for (var i = 0; i < alphabetLength; ++i)
+            {
+                double ic = 0;
+                for (var j = 0; j < alphabetLength; ++j)
+                    ic += frequencies1[j] * frequencies2[(j - i + 26) % 26]
+                          / (double) (text1.Length * text2.Length);
+                icList[i] = ic;
+            }
+
+            return icList;
         }
 
         private static void GetRepetitions(string text)
@@ -118,7 +154,7 @@ namespace Avig
             int length = pattern.Length;
             var positions = new List<int>();
             
-            for (var i = 0; i < text.Length - length; i += length)
+            for (var i = 0; i < text.Length - length; ++i)
             {
                 if (text.Substring(i, length) == pattern)
                     positions.Add(i);
