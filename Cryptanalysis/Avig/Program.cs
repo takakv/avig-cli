@@ -72,6 +72,12 @@ namespace Avig
             for (var i = 0; i < keyLength; ++i)
                 for (int j = i + 1; j < keyLength; ++j)
                     indices.Add(GetMutualICList(partials[i], partials[j]));
+
+            Console.WriteLine();
+            Console.WriteLine("The highest indexes of coincidence are:");
+            double[] maximums = GetListOfMax(indices, out int[] indexes);
+            for (var i = 0; i < maximums.Length; ++i)
+                Console.Write($"{maximums[i]} (pos {indexes[i]}) ");
         }
 
         private static double GetIC(IEnumerable<int> freq, int len)
@@ -186,6 +192,29 @@ namespace Avig
             }
 
             return result;
+        }
+
+        private static double GetMaxFromList(IReadOnlyList<double> list, out int index)
+        {
+            double max = list[0];
+            index = 0;
+            for (var i = 1; i < list.Count; ++i)
+            {
+                if (list[i] < max) continue;
+                max = list[i];
+                index = i;
+            }
+
+            return max;
+        }
+
+        private static double[] GetListOfMax(IReadOnlyList<double[]> list, out int[] positions)
+        {
+            var maximums = new double[list.Count];
+            positions = new int[list.Count];
+            for (var i = 0; i < list.Count; ++i)
+                maximums[i] = GetMaxFromList(list[i], out positions[i]);
+            return maximums;
         }
     }
 }
