@@ -76,11 +76,16 @@ namespace Avig
             Console.WriteLine("The highest indexes of coincidence are:");
             double[] maximums = GetListOfMax(indices, out int[] indexes);
             ApplyICThreshold(maximums, ref indexes, out int validCount);
-            for (var i = 0; i < maximums.Length; ++i)
-                Console.Write($"{maximums[i]} (pos {indexes[i]}) ");
+            foreach (double t in maximums)
+                Console.Write($"~{t:f3} ");
 
+            Console.WriteLine();
+            Console.WriteLine("Solve the following system:");
             int[][] coefficients = GetLinearCoefficients(keyLength, validCount, indexes);
-            Console.WriteLine("Test");
+            foreach (int[] line in coefficients)
+            {
+                Console.WriteLine($"z{line[0]} - z{line[1]} = {line[2]}\t(mod 26)");
+            }
         }
 
         private static double GetIC(IEnumerable<int> freq, int len)
