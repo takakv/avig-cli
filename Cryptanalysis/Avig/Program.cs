@@ -12,11 +12,19 @@ namespace Avig
         private static void Main(string[] args)
         {
             Alphabet.Initialise();
-            
-            Console.WriteLine("Enter a filename with extension:");
-            string filename = Console.ReadLine();
-            string filepath = Directory.GetCurrentDirectory() + "\\" + filename;
-            if (!File.Exists(filepath))
+            string inFile;
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Enter a text file name:");
+                inFile = Console.ReadLine();
+            }
+            else
+            {
+                inFile = args[0];
+            }
+
+            string inPath = inFile + ".txt"; //Directory.GetCurrentDirectory() + "\\" + filename;
+            if (!File.Exists(inPath))
             {
                 Console.WriteLine("No such file.");
                 return;
@@ -24,14 +32,14 @@ namespace Avig
             Text ciphertext;
             try
             {
-                ciphertext = new Text(File.ReadAllText(filename));
+                ciphertext = new Text(File.ReadAllText(inPath));
             }
             catch (Exception error)
             {
                 Console.WriteLine(error.Message);
                 return;
             }
-            Console.WriteLine("Contents of {0}:\n{1}", filename, ciphertext.Content());
+            Console.WriteLine("Contents of {0}:\n{1}", inPath, ciphertext.Content());
 
             Console.WriteLine();
             Console.Write("Frequencies: ");
@@ -75,9 +83,13 @@ namespace Avig
             {
                 ApplyThreshold(maximums, ref indexes, out validCount, threshold);
                 foreach (double t in maximums)
+                {
+                    Console.ForegroundColor = t < threshold ? ConsoleColor.DarkRed : ConsoleColor.DarkGreen;
                     Console.Write($"~{t:f3} ");
+                }
+                Console.ResetColor();
                 Console.WriteLine();
-                Console.WriteLine($"Below threshold: {validCount}. The threshold applied was {threshold}. ");
+                Console.WriteLine($"Above threshold: {validCount}. The threshold applied was {threshold}. ");
                 Console.Write("You may enter a custom threshold or press enter to continue: ");
                 choice = Console.ReadLine();
                 if (choice == "") continue;
@@ -85,7 +97,7 @@ namespace Avig
                 Console.WriteLine();
             } while (choice != "");
 
-            Console.WriteLine("\n");
+            Console.WriteLine();
             Console.WriteLine("Solve the following system:");
             IEnumerable<int[]> coefficients = GetLinearCoefficients(keyLength, validCount, indexes);
             foreach (int[] line in coefficients)
@@ -101,8 +113,21 @@ namespace Avig
             Console.WriteLine();
             Console.Write("Enter a deciphering key or press enter for testing all keys: ");
             string testKey = Console.ReadLine();
+            string plaintext = ciphertext.Decipher(testKey);
             Console.WriteLine();
-            Console.WriteLine(ciphertext.Decipher(testKey));
+            Console.WriteLine(plaintext);
+            string outPath = inFile + "_processed.txt";
+            try
+            {
+                File.WriteAllText(outPath, plaintext);
+                Console.Write("Output text to ");
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                Console.WriteLine(outPath);
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine(error.Message);
+            }
         }
     }
 }

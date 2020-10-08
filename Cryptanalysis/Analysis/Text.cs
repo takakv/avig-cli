@@ -13,7 +13,7 @@ namespace Analysis
 
         public Text(string text)
         {
-            _text = text.ToUpper();
+            _text = text.ToUpper().Trim();
             _length = text.Length;
             _frequencies = new int[Alphabet.Length];
             foreach (char c in _text)
