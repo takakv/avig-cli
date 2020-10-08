@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Analysis;
 using static Analysis.List;
+using static Analysis.Keygen;
 
 namespace Avig
 {
@@ -73,7 +73,7 @@ namespace Avig
             var threshold = 0.061;
             do
             {
-                ApplyICThreshold(maximums, ref indexes, out validCount, threshold);
+                ApplyThreshold(maximums, ref indexes, out validCount, threshold);
                 foreach (double t in maximums)
                     Console.Write($"~{t:f3} ");
                 Console.WriteLine();
@@ -103,65 +103,6 @@ namespace Avig
             string testKey = Console.ReadLine();
             Console.WriteLine();
             Console.WriteLine(ciphertext.Decipher(testKey));
-        }
-        
-        private static void ApplyICThreshold(IReadOnlyList<double> maximums, ref int[] indexes,
-            out int count, double threshold)
-        {
-            count = 0;
-            for (var i = 0; i < maximums.Count; ++i)
-            {
-                if (maximums[i] < threshold)
-                    indexes[i] = -1;
-                else
-                    ++count;
-            }
-        }
-
-        private static IEnumerable<int[]> GetLinearCoefficients(int keyLength,
-            int coefficientCount, IReadOnlyList<int> indexes)
-        {
-            var placeholders = new List<int[]>();
-
-            for (var i = 0; i < keyLength; ++i)
-                for (int j = i + 1; j < keyLength; ++j)
-                    placeholders.Add(new[] {i + 1, j + 1, 0});
-
-            var coefficients = new int[coefficientCount][];
-            var coefficientIndex = 0;
-            for (var i = 0; i < indexes.Count; ++i)
-                if (indexes[i] != -1)
-                    coefficients[coefficientIndex++] =
-                        new[] {placeholders[i][0], placeholders[i][1], indexes[i]};
-            
-            return coefficients;
-        }
-
-        private static int[] GetLetterDifferences(int keyLength)
-        {
-            var differences = new int[keyLength - 1];
-            for (var i = 0; i < keyLength - 1; ++i)
-            {
-                Console.Write($"z{i+2} = z1 + ");
-                int.TryParse(Console.ReadLine(), out differences[i]);
-            }
-            Console.WriteLine();
-            return differences;
-        }
-
-        private static void PrintKeys(int[] differences)
-        {
-            for (var i = 'A'; i <= 'Z'; ++i)
-            {
-                var key = new StringBuilder();
-                key.Append(i);
-                foreach (int t in differences)
-                    key.Append((char) ((i - 'A' + t) % Alphabet.Length + 'A'));
-                Console.Write($"{key}\t");
-                if (i == 'A' + Alphabet.Length / 2 - 1)
-                    Console.WriteLine();
-            }
-            Console.WriteLine();
         }
     }
 }
