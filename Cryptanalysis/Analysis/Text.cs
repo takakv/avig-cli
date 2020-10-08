@@ -95,7 +95,7 @@ namespace Analysis
             
             for (var i = 0; i < _length - length; ++i)
             {
-                if (_text.Substring(i, length) == pattern)
+                if (_text.Substring(i, length) == pattern.ToUpper())
                     positions.Add(i);
             }
 

@@ -3,30 +3,44 @@ using System.Text;
 
 namespace Analysis
 {
-    public static class Keygen
+    public struct Keys
     {
-        public static int[] GetLetterDifferences(int keyLength)
+        private int[] _relations;
+        private string[] _keys;
+
+        public Keys(int keyLength)
         {
-            var differences = new int[keyLength - 1];
+            _relations = new int[keyLength - 1];
             for (var i = 0; i < keyLength - 1; ++i)
             {
                 Console.Write($"z{i+2} = z1 + ");
-                int.TryParse(Console.ReadLine(), out differences[i]);
+                int.TryParse(Console.ReadLine(), out _relations[i]);
             }
             Console.WriteLine();
-            return differences;
+            _keys = new string[Alphabet.Length];
+            GenerateKeys();
         }
-        
-        public static void PrintKeys(int[] differences)
+
+        private void GenerateKeys()
         {
             for (var i = 'A'; i <= 'Z'; ++i)
             {
                 var key = new StringBuilder();
                 key.Append(i);
-                foreach (int t in differences)
-                    key.Append((char) ((i - 'A' + t) % Alphabet.Length + 'A'));
-                Console.Write($"{key}\t");
-                if (i == 'A' + Alphabet.Length / 2 - 1)
+                foreach (int rel in _relations)
+                    key.Append((char) ((i - 'A' + rel) % Alphabet.Length + 'A'));
+                _keys[i - 'A'] = key.ToString();
+            }
+            
+        }
+        
+        public void Print()
+        {
+            for (var i = 0; i < _keys.Length; ++i)
+            {
+                Console.Write($"{_keys[i]}\t");
+                // Newline on half
+                if (i == Alphabet.Length / 2 - 1)
                     Console.WriteLine();
             }
             Console.WriteLine();

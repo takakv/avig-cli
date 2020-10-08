@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using Analysis;
 using static Analysis.List;
-using static Analysis.Keygen;
 
 namespace Avig
 {
@@ -11,7 +11,11 @@ namespace Avig
     {
         private static void Main(string[] args)
         {
+            // Possibility of adding support for multiple alphabets.
             Alphabet.Initialise();
+            
+            // Get file from the user with minimal validation.
+            // This is a tool for busy students after all :-)
             string inFile;
             if (args.Length == 0)
             {
@@ -45,6 +49,8 @@ namespace Avig
             Console.Write("Frequencies: ");
             ciphertext.PrintFrequencies();
 
+            // Index of coincidence of the ciphertext. The longer a Vigenere
+            // ciphertext, the more the IC tends toward 4.
             Console.WriteLine();
             Console.WriteLine($"Index of Coincidence: {ciphertext.GetIC()}.");
             
@@ -54,19 +60,34 @@ namespace Avig
             Console.WriteLine("String repetitions:");
             ciphertext.GetRepetitions();
             
+            // The user has to make an educated guess about which substring
+            // is the most probable to yield good results.
             Console.WriteLine();
             Console.WriteLine("Which substring would you like to use for testing?");
-            string subStr = Console.ReadLine()?.ToUpper();
+            string subStr = Console.ReadLine();
+
+            while (subStr == null || !Regex.IsMatch(subStr, @"[a-zA-Z]$"))
+            {
+                if (subStr == "") return;
+                Console.WriteLine("Please enter a valid substring, or press enter to quit.");
+                subStr = Console.ReadLine();
+            }
             
+            // Use Kasiski analysis to determine the most probable key-length.
             int keyLength = ciphertext.Kasiski(subStr);
             Console.WriteLine($"The probable key-length is {keyLength}.");
             
+            // If the Kasiski analysis got the correct key length, the IC
+            // of each block of letter-position modulo key length letters
+            // should be about ~0.065.
             Console.WriteLine();
             Console.WriteLine($"Examining substrings based on key-length of {keyLength}:");
             Text[] partials = ciphertext.GetSubstring(keyLength);
             for (var i = 0; i < partials.Length; ++i)
                 Console.WriteLine($"IC{i + 1}: {partials[i].GetIC()}");
 
+            // Compute the ICs of each block pair, to try and identify the relations
+            // between keys.
             var indices = new List<double[]>();
             for (var i = 0; i < keyLength; ++i)
                 for (int j = i + 1; j < keyLength; ++j)
@@ -76,6 +97,9 @@ namespace Avig
             Console.WriteLine("The highest indices of coincidence between substrings (truncated, not rounded) are:");
             double[] maximums = GetMaxOfEach(indices, out int[] indexes);
 
+            // Only the ICs of relevance should be kept. If there are too many ICs
+            // there is the possibility that the linear congruence system cannot
+            // be solved. This is due to "noise" in the IC calculation.
             int validCount;
             string choice;
             var threshold = 0.061;
@@ -97,26 +121,34 @@ namespace Avig
                 Console.WriteLine();
             } while (choice != "");
 
+            // Use an external tool or good-old pen and paper to solve the system
+            // of linear congruences.
             Console.WriteLine();
             Console.WriteLine("Solve the following system:");
             IEnumerable<int[]> coefficients = GetLinearCoefficients(keyLength, validCount, indexes);
             foreach (int[] line in coefficients)
                 Console.WriteLine($"z{line[0]} - z{line[1]} = {line[2]}\t(mod 26)");
 
+            // The user only has to enter the "shift", without any variable names.
+            // All the keys will be generated based on that info.
+            // Again, minimal validation, trolls beware!
             Console.WriteLine();
             Console.WriteLine("Enter the results:");
-            int[] differences = GetLetterDifferences(keyLength);
+            var keys = new Keys(keyLength);
 
             Console.WriteLine("All potential keys are:");
-            PrintKeys(differences);
+            keys.Print();
 
+            // User must rely on instinct to find the right key.
+            // Alternatively, if all keys are chosen, all plaintexts
+            // will be generated.
             Console.WriteLine();
             Console.Write("Enter a deciphering key or press enter for testing all keys: ");
             string testKey = Console.ReadLine();
             string plaintext = ciphertext.Decipher(testKey);
             Console.WriteLine();
             Console.WriteLine(plaintext);
-            string outPath = inFile + "_processed.txt";
+            string outPath = inFile + "_decrypted.txt";
             try
             {
                 File.WriteAllText(outPath, plaintext);
@@ -127,6 +159,7 @@ namespace Avig
             catch (Exception error)
             {
                 Console.WriteLine(error.Message);
+                Console.WriteLine("Could not write output to file. Quitting...");
             }
         }
     }
