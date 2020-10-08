@@ -26,5 +26,37 @@ namespace Analysis
                 maximums[i] = GetMax(list[i], out positions[i]);
             return maximums;
         }
+        
+        public static void ApplyThreshold(IReadOnlyList<double> maximums, ref int[] indexes,
+            out int count, double threshold)
+        {
+            count = 0;
+            for (var i = 0; i < maximums.Count; ++i)
+            {
+                if (maximums[i] < threshold)
+                    indexes[i] = -1;
+                else
+                    ++count;
+            }
+        }
+        
+        public static IEnumerable<int[]> GetLinearCoefficients(int iterations,
+            int coefficientCount, IReadOnlyList<int> indexes)
+        {
+            var placeholders = new List<int[]>();
+
+            for (var i = 0; i < iterations; ++i)
+                for (int j = i + 1; j < iterations; ++j)
+                    placeholders.Add(new[] {i + 1, j + 1, 0});
+
+            var coefficients = new int[coefficientCount][];
+            var coefficientIndex = 0;
+            for (var i = 0; i < indexes.Count; ++i)
+                if (indexes[i] != -1)
+                    coefficients[coefficientIndex++] =
+                        new[] {placeholders[i][0], placeholders[i][1], indexes[i]};
+            
+            return coefficients;
+        }
     }
 }
