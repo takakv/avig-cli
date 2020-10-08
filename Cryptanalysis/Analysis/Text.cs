@@ -4,70 +4,114 @@ using System.Text.RegularExpressions;
 
 namespace Analysis
 {
-    public static class Text
+    public readonly struct Text
     {
-        public static double GetIC(IEnumerable<int> freq, int len)
+        private readonly string _text;
+        private readonly int _length;
+
+        public Text(string text)
+        {
+            _text = text.ToUpper();
+            _length = text.Length;
+        }
+
+        public string Content()
+        {
+            return _text;
+        }
+        
+        public double GetIC(IEnumerable<int> freq)
         {
             double ic = 0;
             foreach (int i in freq)
                 ic += i * (i - 1);
-            return ic / (len * (len - 1));
+            return ic / (_length * (_length - 1));
         }
         
-        public static double GetIC(string text)
+        public double GetIC()
         {
             var characters = new char[Alphabet.Length];
             for (var i = 0; i < Alphabet.Length; ++i)
                 characters[i] = (char) ('A' + i);
 
             var frequencies = new int[Alphabet.Length];
-            foreach (char c in text)
+            foreach (char c in _text)
                 ++frequencies[Array.IndexOf(characters, c)];
 
-            return GetIC(frequencies, text.Length);
+            return GetIC(frequencies);
+        }
+
+        public double[] GetMutualICList(Text altText)
+        {
+            var characters = new char[Alphabet.Length];
+            for (var i = 0; i < Alphabet.Length; ++i)
+                characters[i] = (char) ('A' + i);
+
+            var frequencies1 = new int[Alphabet.Length];
+            var frequencies2 = new int[Alphabet.Length];
+
+            foreach (char c in _text)
+                ++frequencies1[Array.IndexOf(characters, c)];
+
+            foreach (char c in altText._text)
+                ++frequencies2[Array.IndexOf(characters, c)];
+
+            var icList = new double[Alphabet.Length];
+
+            for (var i = 0; i < Alphabet.Length; ++i)
+            {
+                double ic = 0;
+                for (var j = 0; j < Alphabet.Length; ++j)
+                    ic += frequencies1[j]
+                          * frequencies2[(j - i + Alphabet.Length) % Alphabet.Length]
+                          / (double) (_length * altText._length);
+                icList[i] = ic;
+            }
+
+            return icList;
         }
         
-        public static string[] GetSubstring(string text, int length)
+        public Text[] GetSubstring(int strLength)
         {
-            var texts = new List<char>[length];
-            for (var i = 0; i < length; ++i)
+            var texts = new List<char>[strLength];
+            for (var i = 0; i < strLength; ++i)
             {
                 texts[i] = new List<char>();
             }
-            for (var i = 0; i < text.Length; ++i)
+            for (var i = 0; i < _length; ++i)
             {
-                texts[i % length].Add(text[i]);
+                texts[i % strLength].Add(_text[i]);
             }
 
-            var substring = new string[length];
-            for (var i = 0; i < length; ++i)
+            var substring = new Text[strLength];
+            for (var i = 0; i < strLength; ++i)
             {
-                substring[i] = new string(texts[i].ToArray());
+                substring[i] = new Text(new string(texts[i].ToArray()));
             }
 
             return substring;
         }
         
-        public static void GetRepetitions(string text)
+        public void GetRepetitions()
         {
             var substrLen = 2;
             int count;
             do
             {
-                string substring = text.Substring(0, substrLen++);
-                count = Regex.Matches(text, substring).Count;
+                string substring = _text.Substring(0, substrLen++);
+                count = Regex.Matches(_text, substring).Count;
                 Console.WriteLine($"{substring} appears {count} times in text.");
             } while (count > 2);
         }
 
-        public static int Kasiski(string text, string pattern)
+        public int Kasiski(string pattern)
         {
             int length = pattern.Length;
             var positions = new List<int>();
             
-            for (var i = 0; i < text.Length - length; ++i)
+            for (var i = 0; i < _length - length; ++i)
             {
-                if (text.Substring(i, length) == pattern)
+                if (_text.Substring(i, length) == pattern)
                     positions.Add(i);
             }
 

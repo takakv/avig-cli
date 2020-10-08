@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using Analysis;
-using static Analysis.Text;
 using static Analysis.List;
 
 namespace Avig
@@ -21,20 +20,20 @@ namespace Avig
                 Console.WriteLine("No such file.");
                 return;
             }
-            string text;
+            Text ciphertext;
             try
             {
-                text = File.ReadAllText(filename).ToUpper();
+                ciphertext = new Text(File.ReadAllText(filename));
             }
             catch (Exception error)
             {
                 Console.WriteLine(error.Message);
                 return;
             }
-            Console.WriteLine("Contents of {0}:\n{1}", filename, text);
+            Console.WriteLine("Contents of {0}:\n{1}", filename, ciphertext);
 
             var frequencies = new int[Alphabet.Length];
-            foreach (char c in text)
+            foreach (char c in ciphertext.Content())
                 ++frequencies[Array.IndexOf(Alphabet.Charset, c)];
 
             Console.WriteLine();
@@ -43,33 +42,33 @@ namespace Avig
                 Console.Write($"{Alphabet.Charset[i]}:{frequencies[i]} ");
 
             Console.WriteLine();
-            Console.WriteLine($"Index of Coincidence: {GetIC(frequencies, text.Length)}.");
+            Console.WriteLine($"Index of Coincidence: {ciphertext.GetIC(frequencies)}.");
             
             Console.WriteLine();
             Console.WriteLine("Kasiski analysis:");
             
             Console.WriteLine("String repetitions:");
-            GetRepetitions(text);
+            ciphertext.GetRepetitions();
             
             Console.WriteLine();
             Console.WriteLine("Which substring would you like to use for testing?");
             string subStr = Console.ReadLine()?.ToUpper();
             
-            int keyLength = Kasiski(text, subStr);
+            int keyLength = ciphertext.Kasiski(subStr);
             Console.WriteLine($"The probable key-length is {keyLength}.");
             
             Console.WriteLine();
             Console.WriteLine($"Examining substrings based on key-length of {keyLength}:");
-            string[] partials = GetSubstring(text, keyLength);
+            Text[] partials = ciphertext.GetSubstring(keyLength);
             for (var i = 0; i < partials.Length; ++i)
             {
-                Console.WriteLine($"IC{i + 1}: {GetIC(partials[i])}");
+                Console.WriteLine($"IC{i + 1}: {partials[i].GetIC()}");
             }
 
             var indices = new List<double[]>();
             for (var i = 0; i < keyLength; ++i)
                 for (int j = i + 1; j < keyLength; ++j)
-                    indices.Add(GetMutualICList(partials[i], partials[j]));
+                    indices.Add(partials[i].GetMutualICList(partials[j]));
 
             Console.WriteLine();
             Console.WriteLine("The highest indices of coincidence (truncated, not rounded) are:");
@@ -104,37 +103,7 @@ namespace Avig
                 Console.WriteLine($"z{line[0]} - z{line[1]} = {line[2]}\t(mod 26)");
             }
         }
-
-        private static double[] GetMutualICList(string text1, string text2)
-        {
-            var characters = new char[Alphabet.Length];
-            for (var i = 0; i < Alphabet.Length; ++i)
-                characters[i] = (char) ('A' + i);
-
-            var frequencies1 = new int[Alphabet.Length];
-            var frequencies2 = new int[Alphabet.Length];
-
-            foreach (char c in text1)
-                ++frequencies1[Array.IndexOf(characters, c)];
-
-            foreach (char c in text2)
-                ++frequencies2[Array.IndexOf(characters, c)];
-
-            var icList = new double[Alphabet.Length];
-
-            for (var i = 0; i < Alphabet.Length; ++i)
-            {
-                double ic = 0;
-                for (var j = 0; j < Alphabet.Length; ++j)
-                    ic += frequencies1[j]
-                          * frequencies2[(j - i + Alphabet.Length) % Alphabet.Length]
-                          / (double) (text1.Length * text2.Length);
-                icList[i] = ic;
-            }
-
-            return icList;
-        }
-
+        
         private static void ApplyICThreshold(IReadOnlyList<double> maximums, ref int[] indexes,
             out int count, double threshold)
         {
