@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Analysis;
 using static Analysis.List;
@@ -19,7 +20,7 @@ namespace Avig
             string inFile;
             if (args.Length == 0)
             {
-                Console.WriteLine("Enter a text file name:");
+                Console.WriteLine("Enter a file name (with extension):");
                 inFile = Console.ReadLine();
             }
             else
@@ -27,8 +28,9 @@ namespace Avig
                 inFile = args[0];
             }
 
-            string inPath = inFile + ".txt"; //Directory.GetCurrentDirectory() + "\\" + filename;
-            if (!File.Exists(inPath))
+            string inPath = Directory.GetCurrentDirectory();
+            inPath += RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "\\" : "/";
+            if (!File.Exists(inPath + inFile))
             {
                 Console.WriteLine("No such file.");
                 return;
@@ -36,14 +38,14 @@ namespace Avig
             Text ciphertext;
             try
             {
-                ciphertext = new Text(File.ReadAllText(inPath));
+                ciphertext = new Text(File.ReadAllText(inPath + inFile));
             }
             catch (Exception error)
             {
                 Console.WriteLine(error.Message);
                 return;
             }
-            Console.WriteLine("Contents of {0}:\n{1}", inPath, ciphertext.Content());
+            Console.WriteLine("Contents of {0}:\n{1}", inFile, ciphertext.Content());
 
             Console.WriteLine();
             Console.Write("Frequencies: ");
@@ -145,10 +147,10 @@ namespace Avig
             Console.WriteLine();
             Console.Write("Enter a deciphering key or press enter for testing all keys: ");
             string testKey = Console.ReadLine();
-            string plaintext = ciphertext.Decipher(testKey);
+            string plaintext = ciphertext.Decipher(testKey, keys);
             Console.WriteLine();
             Console.WriteLine(plaintext);
-            string outPath = inFile + "_decrypted.txt";
+            string outPath = inPath + "decrypted_" + inFile;
             try
             {
                 File.WriteAllText(outPath, plaintext);

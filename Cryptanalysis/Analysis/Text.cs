@@ -106,9 +106,24 @@ namespace Analysis
             return gcd;
         }
 
-        public string Decipher(string key)
+        public string Decipher(string key, Keys keys)
         {
             key = key.ToUpper();
+            if (key != "")
+                return Decipher(key);
+            
+            var output = new StringBuilder();
+            foreach (string k in keys.Get())
+            {
+                output.Append($"Key: {k}\n");
+                output.Append(Decipher(k));
+                output.Append("\n\n");
+            }
+            return output.ToString();
+        }
+
+        private string Decipher(string key)
+        {
             var output = new StringBuilder();
             int keyLength = key.Length, keyIndex = 0;
             foreach (char c in _text)

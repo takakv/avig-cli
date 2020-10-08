@@ -3,10 +3,10 @@ using System.Text;
 
 namespace Analysis
 {
-    public struct Keys
+    public readonly struct Keys
     {
-        private int[] _relations;
-        private string[] _keys;
+        private readonly int[] _relations;
+        private readonly string[] _keys;
 
         public Keys(int keyLength)
         {
@@ -44,6 +44,11 @@ namespace Analysis
                     Console.WriteLine();
             }
             Console.WriteLine();
+        }
+
+        public string[] Get()
+        {
+            return _keys;
         }
     }
 }
